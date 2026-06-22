@@ -3,20 +3,20 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import api from '../../services/api';
 
 export default function RegisterScreen({ navigation }) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name || !email || !password) return Alert.alert('Error', 'Please fill all fields');
+    if (!username) return Alert.alert('Error', 'Please enter a username');
     setLoading(true);
     try {
-      await api.post('/auth/register', { name, email, password, role: 'student' });
-      Alert.alert('Success', 'Account Created! You can now log in.');
-      navigation.goBack();
+      // Backend should check if username exists. If yes, return error.
+      await api.post('/auth/register', { username, role: 'student' });
+      Alert.alert('Success', 'Account Created! Welcome to Brailley.');
+      // Navigate to your main app screen here (e.g., Home or Dashboard)
+      // navigation.replace('Home'); 
     } catch (error) {
-      Alert.alert('Registration Failed', error.response?.data?.message || 'Network error');
+      Alert.alert('Registration Failed', error.response?.data?.message || 'Username might already be taken');
     } finally {
       setLoading(false);
     }
@@ -25,17 +25,23 @@ export default function RegisterScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Start learning Braille today.</Text>
+      <Text style={styles.subtitle}>Pick a unique username to start learning.</Text>
 
-      <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#64748b" value={name} onChangeText={setName} />
-      <TextInput style={styles.input} placeholder="Email Address" placeholderTextColor="#64748b" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-      <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#64748b" secureTextEntry value={password} onChangeText={setPassword} />
+      <TextInput 
+        style={styles.input} 
+        placeholder="Choose a Username" 
+        placeholderTextColor="#64748b" 
+        autoCapitalize="none" 
+        value={username} 
+        onChangeText={setUsername} 
+      />
 
       <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-        {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Register as Student</Text>}
+        {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Get Started</Text>}
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20 }}>
+      {/* Using REPLACE here prevents stacking */}
+      <TouchableOpacity onPress={() => navigation.replace('Login')} style={{ marginTop: 20 }}>
         <Text style={styles.linkText}>Already have an account? <Text style={styles.linkHighlight}>Login</Text></Text>
       </TouchableOpacity>
     </View>

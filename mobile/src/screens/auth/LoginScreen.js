@@ -3,21 +3,23 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import api from '../../services/api';
 
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) return Alert.alert('Error', 'Please fill all fields');
+    if (!username) return Alert.alert('Error', 'Please enter your username');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
+      // Backend should check if username exists. If no, return error.
+      const res = await api.post('/auth/login', { username });
       if (res.data.role === 'admin') {
         return Alert.alert('Access Denied', 'Admins must use the Web Portal.');
       }
-      Alert.alert('Success', 'Welcome to Brailley Student App!');
+      Alert.alert('Success', 'Welcome back to Brailley!');
+      // Navigate to your main app screen here
+      // navigation.replace('Home');
     } catch (error) {
-      Alert.alert('Login Failed', error.response?.data?.message || 'Network error');
+      Alert.alert('Login Failed', error.response?.data?.message || 'Username not found');
     } finally {
       setLoading(false);
     }
@@ -26,17 +28,24 @@ export default function LoginScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Braill<Text style={styles.highlight}>ey.</Text></Text>
-      <Text style={styles.subtitle}>Student App Portal</Text>
+      <Text style={styles.subtitle}>Welcome back. Enter your username.</Text>
 
-      <TextInput style={styles.input} placeholder="Email Address" placeholderTextColor="#64748b" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-      <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#64748b" secureTextEntry value={password} onChangeText={setPassword} />
+      <TextInput 
+        style={styles.input} 
+        placeholder="Username" 
+        placeholderTextColor="#64748b" 
+        autoCapitalize="none" 
+        value={username} 
+        onChangeText={setUsername} 
+      />
 
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Sign In</Text>}
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')} style={{ marginTop: 20 }}>
-        <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkHighlight}>Register</Text></Text>
+      {/* Using REPLACE here prevents stacking */}
+      <TouchableOpacity onPress={() => navigation.replace('Register')} style={{ marginTop: 20 }}>
+        <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkHighlight}>Get Started</Text></Text>
       </TouchableOpacity>
     </View>
   );
