@@ -6,7 +6,7 @@ export default function LandingScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>STUDENT APP BETA</Text>
+          <Text style={styles.badgeText}>BRAILLEY BETA</Text>
         </View>
 
         <Text style={styles.title}>
