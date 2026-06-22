@@ -1,22 +1,44 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import api from '../../services/api';
+import { useNotification } from '../../context/NotificationContext';
+import { getOrCreateDeviceId } from '../../utils/deviceAuth'; 
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showNotification } = useNotification(); 
 
   const handleRegister = async () => {
-    if (!username) return Alert.alert('Error', 'Please enter a username');
+    if (!username) {
+      return showNotification('Please enter a username', 'error');
+    }
+    
     setLoading(true);
     try {
-      // Backend should check if username exists. If yes, return error.
-      await api.post('/auth/register', { username, role: 'student' });
-      Alert.alert('Success', 'Account Created! Welcome to Brailley.');
-      // Navigate to your main app screen here (e.g., Home or Dashboard)
-      // navigation.replace('Home'); 
+      const deviceId = await getOrCreateDeviceId();
+      
+      if (!deviceId) {
+        setLoading(false);
+        return showNotification('Could not generate a secure device binding.', 'error');
+      }
+
+      await api.post('/auth/register', { 
+        username, 
+        deviceId, 
+        role: 'student' 
+      });
+      
+      showNotification('Account Created! Please log in.', 'success');
+      
+      setTimeout(() => {
+        navigation.replace('Login'); 
+      }, 1500);
+
     } catch (error) {
-      Alert.alert('Registration Failed', error.response?.data?.message || 'Username might already be taken');
+      console.error("API ERROR:", error.response?.data || error.message);
+      const errorMsg = error.response?.data?.message || 'Username might already be taken';
+      showNotification(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
@@ -40,7 +62,6 @@ export default function RegisterScreen({ navigation }) {
         {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Get Started</Text>}
       </TouchableOpacity>
 
-      {/* Using REPLACE here prevents stacking */}
       <TouchableOpacity onPress={() => navigation.replace('Login')} style={{ marginTop: 20 }}>
         <Text style={styles.linkText}>Already have an account? <Text style={styles.linkHighlight}>Login</Text></Text>
       </TouchableOpacity>

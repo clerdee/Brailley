@@ -1,18 +1,19 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Landing from '../pages/Landing';
-import Login from '../auth/Login';
-import Register from '../auth/Register';
 import About from '../pages/About';
+import AdminDashboard from '../pages/admin/AdminDashboard'; 
 
 export default function AppRoutes() {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<Landing />} />
-      
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/about" element={<About />} />
 
+      {/* Admin Protected Routes */}
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+      {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

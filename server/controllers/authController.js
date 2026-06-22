@@ -4,28 +4,69 @@ const generateToken = require('../utils/generateToken');
 // @desc    Register a new user
 // @route   POST /api/auth/register
 const registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, username, deviceId, role } = req.body;
 
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: 'Email already exists' });
-
     const totalUsers = await User.countDocuments({});
     const isFirstAccount = totalUsers === 0;
 
     const assignedRole = isFirstAccount ? 'admin' : (role || 'student');
     const isApproved = isFirstAccount || assignedRole === 'student';
 
-    const user = await User.create({ name, email, password, role: assignedRole, isApproved });
+    // ==========================================
+    // STUDENT FLOW (MOBILE)
+    // ==========================================
+    if (assignedRole === 'student') {
+      if (!username || !deviceId) {
+        return res.status(400).json({ message: 'Username and Device ID are required for students' });
+      }
 
-    if (user) {
-      res.status(201).json({
-        _id: user._id, name: user.name, email: user.email, role: user.role, isApproved: user.isApproved,
+      const userExists = await User.findOne({ username });
+      if (userExists) return res.status(400).json({ message: 'Username is already taken' });
+
+      const user = await User.create({ 
+        username, 
+        deviceId, 
+        role: assignedRole, 
+        isApproved 
+      });
+
+      return res.status(201).json({
+        _id: user._id, 
+        username: user.username, 
+        role: user.role, 
+        isApproved: user.isApproved,
         token: generateToken(user._id)
       });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
     }
+
+    // ==========================================
+    // ADMIN FLOW (WEB PORTAL)
+    // ==========================================
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: 'Name, email, and password are required for admins' });
+    }
+
+    const adminExists = await User.findOne({ email });
+    if (adminExists) return res.status(400).json({ message: 'Email already exists' });
+
+    const user = await User.create({ 
+      name, 
+      email, 
+      password, 
+      role: assignedRole, 
+      isApproved 
+    });
+
+    return res.status(201).json({
+      _id: user._id, 
+      name: user.name, 
+      email: user.email, 
+      role: user.role, 
+      isApproved: user.isApproved,
+      token: generateToken(user._id)
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -34,24 +75,54 @@ const registerUser = async (req, res) => {
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, username, deviceId } = req.body;
 
   try {
-    const user = await User.findOne({ email });
-
-    if (user && (await user.matchPassword(password))) {
+    // ==========================================
+    // STUDENT LOGIN FLOW (MOBILE)
+    // ==========================================
+    if (username) {
+      const user = await User.findOne({ username, role: 'student' });
       
-      if (!user.isApproved) {
-        return res.status(401).json({ message: 'Your admin account is pending approval from the Main Admin.' });
+      if (!user) return res.status(401).json({ message: 'Username not found' });
+
+      if (user.deviceId !== deviceId) {
+        return res.status(401).json({ message: 'Unrecognized device. Please log in from your original phone.' });
       }
 
-      res.json({
-        _id: user._id, name: user.name, email: user.email, role: user.role,
+      return res.json({
+        _id: user._id, 
+        username: user.username, 
+        role: user.role,
         token: generateToken(user._id)
       });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    // ==========================================
+    // ADMIN LOGIN FLOW (WEB PORTAL)
+    // ==========================================
+    if (email) {
+      const user = await User.findOne({ email });
+
+      if (user && (await user.matchPassword(password))) {
+        if (!user.isApproved) {
+          return res.status(401).json({ message: 'Your admin account is pending approval from the Main Admin.' });
+        }
+
+        return res.json({
+          _id: user._id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role,
+          token: generateToken(user._id)
+        });
+      } else {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+    }
+
+    res.status(400).json({ message: 'Please provide valid login credentials' });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

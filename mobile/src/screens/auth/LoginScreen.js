@@ -1,25 +1,50 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import api from '../../services/api';
+
+import { useNotification } from '../../context/NotificationContext';
+import { getOrCreateDeviceId } from '../../utils/deviceAuth';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const { showNotification } = useNotification();
+
   const handleLogin = async () => {
-    if (!username) return Alert.alert('Error', 'Please enter your username');
+    if (!username) {
+      return showNotification('Please enter your username', 'error');
+    }
+    
     setLoading(true);
     try {
-      // Backend should check if username exists. If no, return error.
-      const res = await api.post('/auth/login', { username });
-      if (res.data.role === 'admin') {
-        return Alert.alert('Access Denied', 'Admins must use the Web Portal.');
+      const deviceId = await getOrCreateDeviceId();
+
+      if (!deviceId) {
+        setLoading(false);
+        return showNotification('Could not retrieve device credentials.', 'error');
       }
-      Alert.alert('Success', 'Welcome back to Brailley!');
-      // Navigate to your main app screen here
-      // navigation.replace('Home');
+
+      const res = await api.post('/auth/login', { 
+        username, 
+        deviceId 
+      });
+
+      if (res.data.role === 'admin') {
+        return showNotification('Admins must use the Web Portal.', 'error');
+      }
+
+      showNotification('Welcome back to Brailley!', 'success');
+      
+      setTimeout(() => {
+        navigation.replace('Home');
+      }, 1500);
+
     } catch (error) {
-      Alert.alert('Login Failed', error.response?.data?.message || 'Username not found');
+      console.error("API ERROR:", error.response?.data || error.message);
+      
+      const errorMsg = error.response?.data?.message || 'Username not found or unrecognized device';
+      showNotification(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
@@ -43,7 +68,6 @@ export default function LoginScreen({ navigation }) {
         {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Sign In</Text>}
       </TouchableOpacity>
 
-      {/* Using REPLACE here prevents stacking */}
       <TouchableOpacity onPress={() => navigation.replace('Register')} style={{ marginTop: 20 }}>
         <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkHighlight}>Get Started</Text></Text>
       </TouchableOpacity>
