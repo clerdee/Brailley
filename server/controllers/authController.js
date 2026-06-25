@@ -128,4 +128,20 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const getMe = async (req, res) => {
+  try {
+    // Ang req.user.id ay nagmula sa authMiddleware kapag na-verify ang token
+    const user = await User.findById(req.user.id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error("Error sa getMe:", error.message);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+module.exports = { registerUser, loginUser, getMe };

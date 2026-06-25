@@ -12,11 +12,16 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = localStorage.getItem('token');
         if (token) {
-          const res = await api.get('/auth/me');
+          const res = await api.get('/auth/me', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
           setUser(res.data.user || res.data);
         }
       } catch (err) {
-        localStorage.removeItem('token');
+        console.error("Session Error:", err.response?.data || err.message);
+        localStorage.removeItem('token'); 
       } finally {
         setLoading(false);
       }
