@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Vibration } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 export default function BasicsScreen({ navigation }) {
   const [currentLetter, setCurrentLetter] = useState('A');
@@ -10,8 +11,28 @@ export default function BasicsScreen({ navigation }) {
   };
 
   const handleBack = () => navigation.replace('Home');
-  const nextLetter = () => setCurrentLetter(prev => prev === 'A' ? 'B' : prev === 'B' ? 'C' : 'A');
-  const renderDot = (isActive, i) => <View key={i} style={[styles.dot, isActive && styles.activeDot]} />;
+  
+  const nextLetter = () => {
+    Vibration.vibrate(400); // LONG VIBRATION: Para alam na nag-next letter na
+    setCurrentLetter(prev => prev === 'A' ? 'B' : prev === 'B' ? 'C' : 'A');
+  };
+
+  const handleDotTouch = (isActive) => {
+    if (isActive) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); // HARD: Naka-angat na dot
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // LIGHT: Flat/walang dot
+    }
+  };
+
+  const renderDot = (isActive, i) => (
+    <TouchableOpacity 
+      key={i} 
+      activeOpacity={0.8}
+      onPressIn={() => handleDotTouch(isActive)} // Nagva-vibrate the moment na ma-touch
+      style={[styles.dot, isActive && styles.activeDot]} 
+    />
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>

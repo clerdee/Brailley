@@ -4,6 +4,7 @@ import About from '../pages/About';
 import AdminDashboard from '../pages/admin/AdminDashboard'; 
 import AdminStudents from '../pages/admin/AdminStudents';
 import AdminEducators from '../pages/admin/AdminEducators';
+import AdminDevices from '../pages/admin/AdminDevices';
 import AdminRoute from './AdminRoutes';
 
 export default function AppRoutes() {
@@ -17,6 +18,8 @@ export default function AppRoutes() {
       <Route path="/admin/dashboard" element={<AdminRoute> <AdminDashboard /> </AdminRoute>} />
       <Route path="/admin/students" element={<AdminRoute> <AdminStudents /> </AdminRoute>} />
       <Route path="/admin/educators" element={<AdminRoute> <AdminEducators /> </AdminRoute>} />
+      <Route path="/admin/devices" element={<AdminRoute> <AdminDevices /> </AdminRoute>} />
+
       {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
