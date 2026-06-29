@@ -1,64 +1,67 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Vibration } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function BasicsScreen({ navigation }) {
-  const [currentLetter, setCurrentLetter] = useState('A');
-  const brailleAlphabet = {
-    A: [true, false, false, false, false, false],
-    B: [true, true, false, false, false, false],
-    C: [true, false, false, true, false, false]
+  const [letter, setLetter] = useState('A');
+  const [isVibrating, setIsVibrating] = useState(false);
+
+  const alpha = {
+    A: [true, false, false, false, false, false], B: [true, true, false, false, false, false],
+    C: [true, false, false, true, false, false], D: [true, false, false, true, true, false],
+    E: [true, false, false, false, true, false], F: [true, true, false, true, false, false],
+    G: [true, true, false, true, true, false], H: [true, true, false, false, true, false],
+    I: [false, true, false, true, false, false], J: [false, true, false, true, true, false],
+    K: [true, false, true, false, false, false], L: [true, true, true, false, false, false],
+    M: [true, false, true, true, false, false], N: [true, false, true, true, true, false],
+    O: [true, false, true, false, true, false], P: [true, true, true, true, false, false],
+    Q: [true, true, true, true, true, false], R: [true, true, true, false, true, false],
+    S: [false, true, true, true, false, false], T: [false, true, true, true, true, false],
+    U: [true, false, true, false, false, true], V: [true, true, true, false, false, true],
+    W: [false, true, false, true, true, true], X: [true, false, true, true, false, true],
+    Y: [true, false, true, true, true, true], Z: [true, false, true, false, true, true]
   };
 
-  const handleBack = () => navigation.replace('Home');
-  
-  const nextLetter = () => {
-    Vibration.vibrate(400); // LONG VIBRATION: Para alam na nag-next letter na
-    setCurrentLetter(prev => prev === 'A' ? 'B' : prev === 'B' ? 'C' : 'A');
-  };
-
-  const handleDotTouch = (isActive) => {
-    if (isActive) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); // HARD: Naka-angat na dot
-    } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // LIGHT: Flat/walang dot
+  const playPattern = async (l) => {
+    setIsVibrating(true);
+    const p = alpha[l];
+    for (let r = 0; r < 3; r++) {
+      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(100); }
+      else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await new Promise(r => setTimeout(r, 500));
+      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(100); }
+      else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await new Promise(r => setTimeout(r, 600));
     }
+    setIsVibrating(false);
   };
 
-  const renderDot = (isActive, i) => (
-    <TouchableOpacity 
-      key={i} 
-      activeOpacity={0.8}
-      onPressIn={() => handleDotTouch(isActive)} // Nagva-vibrate the moment na ma-touch
-      style={[styles.dot, isActive && styles.activeDot]} 
-    />
-  );
+  const renderDot = (a, i) => <View key={i} style={[styles.dot, a && styles.activeDot]} />;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack}><Text style={styles.backButton}>Back</Text></TouchableOpacity>
-        <Text style={styles.headerTitle}>The Alphabet</Text>
+        <TouchableOpacity onPress={() => navigation.replace('Home')}><Text style={styles.backBtn}>Back</Text></TouchableOpacity>
+        <Text style={styles.hTitle}>The Alphabet</Text>
         <View style={{ width: 40 }} />
       </View>
       <View style={styles.container}>
-        <View style={styles.displayCard}>
-          <Text style={styles.letterText}>{currentLetter}</Text>
-          <Text style={styles.subtitle}>American Braille</Text>
-        </View>
-        <View style={styles.gridContainer}>
-          <View style={styles.brailleGrid}>
-            <View style={styles.column}>
-              {renderDot(brailleAlphabet[currentLetter][0], 0)}{renderDot(brailleAlphabet[currentLetter][1], 1)}{renderDot(brailleAlphabet[currentLetter][2], 2)}
-            </View>
-            <View style={styles.column}>
-              {renderDot(brailleAlphabet[currentLetter][3], 3)}{renderDot(brailleAlphabet[currentLetter][4], 4)}{renderDot(brailleAlphabet[currentLetter][5], 5)}
-            </View>
+        <View style={styles.dispCard}><Text style={styles.lText}>{letter}</Text></View>
+        <View style={[styles.gridCont, isVibrating && styles.vibeActive]}>
+          <View style={styles.bGrid}>
+            <View style={styles.col}>{renderDot(alpha[letter][0], 0)}{renderDot(alpha[letter][1], 1)}{renderDot(alpha[letter][2], 2)}</View>
+            <View style={styles.col}>{renderDot(alpha[letter][3], 3)}{renderDot(alpha[letter][4], 4)}{renderDot(alpha[letter][5], 5)}</View>
           </View>
         </View>
-        <TouchableOpacity style={styles.actionButton} onPress={nextLetter}>
-          <Text style={styles.actionText}>Next Letter</Text>
-        </TouchableOpacity>
+        <ScrollView style={styles.kbScroll}>
+          <View style={styles.kbGrid}>
+            {Object.keys(alpha).map((l) => (
+              <TouchableOpacity key={l} style={[styles.key, l === letter && styles.activeKey]} onPress={() => { setLetter(l); playPattern(l); }}>
+                <Text style={styles.keyText}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -67,17 +70,20 @@ export default function BasicsScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#0f172a' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 25, paddingTop: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  backButton: { color: '#38bdf8', fontSize: 16, fontWeight: '600' },
-  headerTitle: { color: '#f8fafc', fontSize: 18, fontWeight: '700' },
-  container: { flex: 1, paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center' },
-  displayCard: { alignItems: 'center', marginBottom: 30 },
-  letterText: { fontSize: 80, fontWeight: '900', color: '#f8fafc' },
-  subtitle: { fontSize: 16, color: '#94a3b8', marginTop: 10 },
-  gridContainer: { backgroundColor: '#1e293b', paddingVertical: 50, paddingHorizontal: 60, borderRadius: 40, borderWidth: 1, borderColor: '#334155', marginBottom: 40 },
-  brailleGrid: { flexDirection: 'row', justifyContent: 'space-between', width: 200 },
-  column: { justifyContent: 'space-between', height: 320 },
-  dot: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#334155' },
-  activeDot: { backgroundColor: '#38bdf8', shadowColor: '#38bdf8', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 15, elevation: 12 },
-  actionButton: { backgroundColor: '#38bdf8', paddingVertical: 16, paddingHorizontal: 40, borderRadius: 12, width: '100%', alignItems: 'center' },
-  actionText: { color: '#0f172a', fontSize: 16, fontWeight: 'bold' }
+  backBtn: { color: '#38bdf8', fontSize: 16, fontWeight: '600' },
+  hTitle: { color: '#f8fafc', fontSize: 18, fontWeight: '700' },
+  container: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
+  dispCard: { alignItems: 'center', marginBottom: 20 },
+  lText: { fontSize: 60, fontWeight: '900', color: '#f8fafc' },
+  gridCont: { backgroundColor: '#1e293b', paddingVertical: 30, paddingHorizontal: 40, borderRadius: 30, borderWidth: 2, borderColor: '#334155', marginBottom: 20, alignItems: 'center' },
+  vibeActive: { borderColor: '#38bdf8' },
+  bGrid: { flexDirection: 'row', justifyContent: 'space-between', width: 140 },
+  col: { justifyContent: 'space-between', height: 220 },
+  dot: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#334155' },
+  activeDot: { backgroundColor: '#38bdf8' },
+  kbScroll: { flex: 1 },
+  kbGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingBottom: 20 },
+  key: { width: 45, height: 45, backgroundColor: '#1e293b', margin: 4, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
+  activeKey: { borderColor: '#38bdf8', borderWidth: 2 },
+  keyText: { color: '#f8fafc', fontSize: 16, fontWeight: 'bold' }
 });

@@ -1,73 +1,43 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import * as Battery from 'expo-battery';
 import api from '../../services/api';
-
 import { useNotification } from '../../context/NotificationContext';
 import { getOrCreateDeviceId } from '../../utils/deviceAuth';
 
 export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [loading, setLoading] = useState(false);
-
+  const [username, setUsername] = useState(''); const [loading, setLoading] = useState(false);
   const { showNotification } = useNotification();
 
   const handleLogin = async () => {
-    if (!username) {
-      return showNotification('Please enter your username', 'error');
-    }
-    
+    if (!username) return showNotification('Please enter your username', 'error');
     setLoading(true);
     try {
       const deviceId = await getOrCreateDeviceId();
+      if (!deviceId) { setLoading(false); return showNotification('Could not retrieve device credentials.', 'error'); }
 
-      if (!deviceId) {
-        setLoading(false);
-        return showNotification('Could not retrieve device credentials.', 'error');
-      }
+      const level = await Battery.getBatteryLevelAsync(); 
+      const battery = Math.round(level * 100) + '%';      
 
-      const res = await api.post('/auth/login', { 
-        username, 
-        deviceId 
-      });
+      const res = await api.post('/auth/login', { username, deviceId, battery }); 
 
-      if (res.data.role === 'admin') {
-        return showNotification('Admins must use the Web Portal.', 'error');
-      }
+      if (res.data.role === 'admin') return showNotification('Admins must use the Web Portal.', 'error');
 
       showNotification('Welcome back to Brailley!', 'success');
-      
-      setTimeout(() => {
-        navigation.replace('Home');
-      }, 1500);
-
+      setTimeout(() => navigation.replace('Home'), 1500);
     } catch (error) {
-      console.error("API ERROR:", error.response?.data || error.message);
-      
-      const errorMsg = error.response?.data?.message || 'Username not found or unrecognized device';
-      showNotification(errorMsg, 'error');
-    } finally {
-      setLoading(false);
-    }
+      showNotification(error.response?.data?.message || 'Login failed', 'error');
+    } finally { setLoading(false); }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Braill<Text style={styles.highlight}>ey.</Text></Text>
       <Text style={styles.subtitle}>Welcome back. Enter your username.</Text>
-
-      <TextInput 
-        style={styles.input} 
-        placeholder="Username" 
-        placeholderTextColor="#64748b" 
-        autoCapitalize="none" 
-        value={username} 
-        onChangeText={setUsername} 
-      />
-
+      <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#64748b" autoCapitalize="none" value={username} onChangeText={setUsername} />
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Sign In</Text>}
       </TouchableOpacity>
-
       <TouchableOpacity onPress={() => navigation.replace('Register')} style={{ marginTop: 20 }}>
         <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkHighlight}>Get Started</Text></Text>
       </TouchableOpacity>
