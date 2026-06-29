@@ -1,9 +1,35 @@
-// HomeScreen.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
+import * as Battery from 'expo-battery';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../services/api'; 
 
 export default function HomeScreen({ navigation }) {
-  const handleLogout = () => navigation.replace('Landing');
+  useEffect(() => {
+    const syncHardware = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem('user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        
+        const level = await Battery.getBatteryLevelAsync();
+        const batteryPercentage = Math.round(level * 100) + '%';
+        
+        await api.put('/telemetry/sync', { deviceId: user.deviceId, battery: batteryPercentage, status: 'Online' });
+      } catch (err) { console.log("Telemetry error:", err); }
+    };
+
+    syncHardware(); 
+    const interval = setInterval(syncHardware, 60000); 
+    return () => clearInterval(interval); 
+  }, []);
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('user');
+    await AsyncStorage.removeItem('token');
+    navigation.replace('Landing');
+  };
+
   const goToBasics = () => navigation.replace('Basics');
 
   return (
