@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Basic Test Route
 app.get('/api', (req, res) => {
