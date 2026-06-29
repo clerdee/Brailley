@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Landing from '../pages/Landing';
 import About from '../pages/About';
 import AdminDashboard from '../pages/admin/AdminDashboard'; 
+import AdminStudents from '../pages/admin/AdminStudents';
 import AdminRoute from './AdminRoutes';
 
 export default function AppRoutes() {
@@ -13,6 +14,7 @@ export default function AppRoutes() {
 
       {/* PROTECTED ADMIN ROUTES */}
       <Route path="/admin/dashboard" element={<AdminRoute> <AdminDashboard /> </AdminRoute>} />
+      <Route path="/admin/students" element={<AdminRoute> <AdminStudents /> </AdminRoute>} />
 
       {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/" />} />
