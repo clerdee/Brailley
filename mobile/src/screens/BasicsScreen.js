@@ -6,6 +6,7 @@ import { Audio } from 'expo-av';
 export default function BasicsScreen({ navigation }) {
   const [letter, setLetter] = useState('A');
   const [status, setStatus] = useState('idle');
+  const [activeDot, setActiveDot] = useState(-1);
   const [sound, setSound] = useState();
 
   const alpha = {
@@ -29,24 +30,22 @@ export default function BasicsScreen({ navigation }) {
     load(); return () => sound?.unloadAsync();
   }, []);
 
-  const trigger = async (isHard, keepPlaying = false) => {
+  const trigger = async (isHard, idx, keep = false) => {
+    setActiveDot(idx);
     if (isHard) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250);
-      if (sound) { await sound.setPositionAsync(0); await sound.playAsync(); if(!keepPlaying) { await new Promise(r => setTimeout(r, 400)); await sound.pauseAsync(); } }
-    } else { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
+      if (sound) { await sound.setPositionAsync(0); await sound.playAsync(); if(!keep) { await new Promise(r => setTimeout(r, 400)); await sound.pauseAsync(); } }
+    } else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const playPattern = async (l) => {
     setStatus('start'); await new Promise(r => setTimeout(r, 500));
     setStatus('playing'); const p = alpha[l];
     for (let r = 0; r < 3; r++) {
-      const left = p[r], right = p[r+3];
-      await trigger(left, right); 
-      await new Promise(r => setTimeout(r, 500));
-      await trigger(right, false);
-      await new Promise(r => setTimeout(r, 600));
+      await trigger(p[r], r, p[r+3]); await new Promise(r => setTimeout(r, 500));
+      await trigger(p[r+3], r+3, false); await new Promise(r => setTimeout(r, 600));
     }
-    setStatus('idle');
+    setStatus('idle'); setActiveDot(-1);
   };
 
   return (
@@ -59,8 +58,8 @@ export default function BasicsScreen({ navigation }) {
         <View style={styles.dispCard}><Text style={styles.lText}>{letter}</Text></View>
         <View style={[styles.gridCont, { borderColor: status === 'playing' ? '#38bdf8' : status === 'start' ? '#22c55e' : '#334155' }]}>
           <View style={styles.bGrid}>
-            <View style={styles.col}>{alpha[letter].slice(0,3).map((a,i) => <View key={i} style={[styles.dot, a && styles.activeDot]} />)}</View>
-            <View style={styles.col}>{alpha[letter].slice(3,6).map((a,i) => <View key={i+3} style={[styles.dot, a && styles.activeDot]} />)}</View>
+            <View style={styles.col}>{alpha[letter].slice(0,3).map((a,i) => <View key={i} style={[styles.dot, a && styles.activeDot, activeDot === i && styles.playingDot]} />)}</View>
+            <View style={styles.col}>{alpha[letter].slice(3,6).map((a,i) => <View key={i+3} style={[styles.dot, a && styles.activeDot, activeDot === i+3 && styles.playingDot]} />)}</View>
           </View>
         </View>
         <ScrollView style={styles.kbScroll} contentContainerStyle={styles.kbGrid}>
@@ -88,6 +87,7 @@ const styles = StyleSheet.create({
   col: { justifyContent: 'space-between', height: 220 },
   dot: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#334155' },
   activeDot: { backgroundColor: '#38bdf8' },
+  playingDot: { backgroundColor: '#22c55e', transform: [{ scale: 1.2 }] },
   kbScroll: { flex: 1 },
   kbGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingBottom: 20 },
   key: { width: 45, height: 45, backgroundColor: '#1e293b', margin: 4, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
