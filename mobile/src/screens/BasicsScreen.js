@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Audio } from 'expo-av';
 
 export default function BasicsScreen({ navigation }) {
   const [letter, setLetter] = useState('A');
@@ -22,16 +23,21 @@ export default function BasicsScreen({ navigation }) {
     Y: [true, false, true, true, true, true], Z: [true, false, true, false, true, true]
   };
 
-  const playPattern = async (l) => {
+  const playBuzz = async () => {
+    const { sound } = await Audio.Sound.createAsync(require('../../assets/buzz.mp3'));
+    await sound.playAsync();
+  };
+
+const playPattern = async (l) => {
     setStatus('start');
     await new Promise(r => setTimeout(r, 500));
     setStatus('playing');
     const p = alpha[l];
     for (let r = 0; r < 3; r++) {
-      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); }
+      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); }
       else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await new Promise(r => setTimeout(r, 500));
-      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); }
+      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); }
       else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await new Promise(r => setTimeout(r, 600));
     }
