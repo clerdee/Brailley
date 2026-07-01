@@ -6,6 +6,7 @@ import AdminStudents from '../pages/admin/AdminStudents';
 import AdminEducators from '../pages/admin/AdminEducators';
 import AdminDevices from '../pages/admin/AdminDevices';
 import AdminSettings from '../pages/admin/AdminSettings';
+import AdminLeaderboard from '../pages/admin/AdminLeaderboard';
 import AdminRoute from './AdminRoutes';
 
 export default function AppRoutes() {
@@ -21,6 +22,7 @@ export default function AppRoutes() {
       <Route path="/admin/educators" element={<AdminRoute> <AdminEducators /> </AdminRoute>} />
       <Route path="/admin/devices" element={<AdminRoute> <AdminDevices /> </AdminRoute>} />
       <Route path="/admin/settings" element={<AdminRoute> <AdminSettings /> </AdminRoute>} />
+      <Route path="/admin/leaderboard" element={<AdminRoute> <AdminLeaderboard /> </AdminRoute>} />
 
       {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/" />} />

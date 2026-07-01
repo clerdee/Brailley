@@ -14,6 +14,7 @@ export default function AdminSidebar() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
+    { name: 'Leaderboard', path: '/admin/leaderboard', icon: '🏆' },
     { name: 'Students', path: '/admin/students', icon: '👨‍🎓' },
     { name: 'Educators', path: '/admin/educators', icon: '👩‍🏫' },
     { name: 'Haptic Devices', path: '/admin/devices', icon: '📟' },
