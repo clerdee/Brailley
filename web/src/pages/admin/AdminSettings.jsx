@@ -34,11 +34,38 @@ export default function AdminSettings() {
             <div style={{ flex: 1, background: 'rgba(30, 41, 59, 0.2)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '24px', padding: '2.5rem', backdropFilter: 'blur(10px)' }}>
               
               {tab === 'profile' && (
-                <motion.form initial={{ opacity: 0 }} animate={{ opacity: 1 }} onSubmit={handleSave}>
-                  <h3 style={{ color: '#f8fafc', margin: '0 0 1.5rem 0', fontSize: '1.2rem' }}>Educator Account</h3>
-                  <div style={{ marginBottom: '1.5rem' }}><label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>Full Name</label><input type="text" defaultValue={user?.name || ''} placeholder="Juan Dela Cruz" style={{ width: '100%', maxWidth: '400px', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(148,163,184,0.2)', background: 'rgba(15,23,42,0.6)', color: '#fff', outline: 'none' }} /></div>
-                  <div style={{ marginBottom: '2.5rem' }}><label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>Email Address</label><input type="email" defaultValue={user?.email || ''} placeholder="educator@brailley.com" style={{ width: '100%', maxWidth: '400px', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(148,163,184,0.2)', background: 'rgba(15,23,42,0.6)', color: '#fff', outline: 'none' }} /></div>
-                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} type="submit" style={{ padding: '12px 24px', background: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>Save Changes</motion.button>
+                <motion.form initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h3 style={{ color: '#f8fafc', margin: '0 0 1.5rem 0', fontSize: '1.2rem' }}>Educator Account</h3>
+                
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>Full Name</label>
+                    <input 
+                    type="text" 
+                    disabled 
+                    defaultValue={user?.name || ''} 
+                    style={{ 
+                        width: '100%', maxWidth: '400px', padding: '12px 16px', borderRadius: '10px', 
+                        border: '1px solid rgba(148,163,184,0.1)', background: 'rgba(15,23,42,0.3)', 
+                        color: '#64748b', 
+                        outline: 'none', cursor: 'not-allowed' 
+                    }} 
+                    />
+                </div>
+
+                <div style={{ marginBottom: '2.5rem' }}>
+                    <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>Email Address</label>
+                    <input 
+                    type="email" 
+                    disabled 
+                    defaultValue={user?.email || ''} 
+                    style={{ 
+                        width: '100%', maxWidth: '400px', padding: '12px 16px', borderRadius: '10px', 
+                        border: '1px solid rgba(148,163,184,0.1)', background: 'rgba(15,23,42,0.3)', 
+                        color: '#64748b', outline: 'none', cursor: 'not-allowed' 
+                    }} 
+                    />
+                </div>
+  
                 </motion.form>
               )}
 
