@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'; import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react'; import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import AdminSidebar from '../../components/admin/AdminSidebar'; import AdminHeader from '../../components/admin/AdminHeader';
 import AdminFooter from '../../components/admin/AdminFooter'; import api from '../../services/api';
@@ -11,13 +11,21 @@ export default function AdminDashboard() {
     if (isManual) setIsRefreshing(true);
     try { const res = await api.get('/admin/users'); setUsers(res.data); setLastUpdated(new Date().toLocaleTimeString()); } 
     catch (error) { console.error("Failed to fetch users", error); } 
-    finally { setLoading(false); if (isManual) setTimeout(() => setIsRefreshing(false), 600); }
+    finally { setLoading(false); if (isManual) setTimeout(() => setIsRefreshing(false), 800); }
   }, []);
 
+  // AUTO REFRESH
   useEffect(() => {
     fetchUsers(); const interval = setInterval(() => fetchUsers(), 10000);
     return () => clearInterval(interval);
   }, [fetchUsers]);
+
+  // SCROLL TO RELOAD LOGIC
+  useEffect(() => {
+    const handleScrollUp = (e) => { if (window.scrollY === 0 && e.deltaY < -40 && !isRefreshing) fetchUsers(true); };
+    window.addEventListener('wheel', handleScrollUp);
+    return () => window.removeEventListener('wheel', handleScrollUp);
+  }, [isRefreshing, fetchUsers]);
 
   const handleApprove = async (userId) => {
     try { await api.put(`/admin/users/${userId}/approve`); setUsers(users.map(u => u._id === userId ? { ...u, isApproved: true } : u)); } 
@@ -33,7 +41,17 @@ export default function AdminDashboard() {
   const stats = [ { title: 'Registered Students', value: studentsCount, icon: '👨‍🎓', color: '#38bdf8' }, { title: 'Active Educators', value: activeAdminsCount, icon: '👩‍🏫', color: '#818cf8' }, { title: 'Connected Devices', value: connectedDevicesCount, icon: '📟', color: '#34d399' }, { title: 'Pending Approval', value: pendingAdmins.length, icon: '⏳', color: '#f59e0b' } ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#090d16', display: 'flex', fontFamily: '"Inter", sans-serif' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#090d16', display: 'flex', fontFamily: '"Inter", sans-serif', position: 'relative' }}>
+      
+      {/* FLOATING RELOAD INDICATOR */}
+      <AnimatePresence>
+        {isRefreshing && (
+          <motion.div initial={{ y: -50, opacity: 0 }} animate={{ y: 30, opacity: 1, rotate: 360 }} exit={{ y: -50, opacity: 0, transition: { duration: 0.3 } }} transition={{ duration: 0.6, ease: "easeInOut", rotate: { repeat: Infinity, duration: 0.8, ease: "linear" } }} style={{ position: 'fixed', top: 0, left: '55%', zIndex: 100, background: '#38bdf8', padding: '12px', borderRadius: '50%', boxShadow: '0 4px 20px rgba(56, 189, 248, 0.4)', color: '#0f172a', display: 'flex' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AdminSidebar />
       <div style={{ flex: 1, marginLeft: '260px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <AdminHeader />
@@ -42,13 +60,9 @@ export default function AdminDashboard() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
             <div>
               <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#f8fafc', margin: '0 0 8px 0' }}>System Overview</h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 10px #34d399' }} />
-                <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.9rem', fontWeight: '500' }}>Live dashboard • Last updated: {lastUpdated || '...'}</p>
-              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 10px #34d399' }} /><p style={{ color: '#94a3b8', margin: 0, fontSize: '0.9rem', fontWeight: '500' }}>Live dashboard • Last updated: {lastUpdated || '...'}</p></div>
             </div>
-            
-            <motion.button title="Force Sync" onClick={() => fetchUsers(true)} animate={{ rotate: isRefreshing ? 360 : 0 }} transition={{ duration: 0.5, ease: 'easeInOut' }} whileHover={{ scale: 1.1, backgroundColor: 'rgba(56, 189, 248, 0.2)' }} whileTap={{ scale: 0.9 }} style={{ width: '48px', height: '48px', background: 'rgba(56, 189, 248, 0.05)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+            <motion.button title="Force Sync" onClick={() => fetchUsers(true)} whileHover={{ scale: 1.1, backgroundColor: 'rgba(56, 189, 248, 0.2)' }} whileTap={{ scale: 0.9 }} style={{ width: '48px', height: '48px', background: 'rgba(56, 189, 248, 0.05)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
             </motion.button>
           </div>
