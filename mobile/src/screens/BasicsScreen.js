@@ -29,17 +29,21 @@ export default function BasicsScreen({ navigation }) {
     load(); return () => sound?.unloadAsync();
   }, []);
 
-  const playBuzz = async () => {
-    if (sound) { await sound.setPositionAsync(0); await sound.setVolumeAsync(1); await sound.playAsync(); await new Promise(r => setTimeout(r, 200)); await sound.setVolumeAsync(0); await sound.pauseAsync(); }
+  const trigger = async (isHard, keepPlaying = false) => {
+    if (isHard) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250);
+      if (sound) { await sound.setPositionAsync(0); await sound.playAsync(); if(!keepPlaying) { await new Promise(r => setTimeout(r, 400)); await sound.pauseAsync(); } }
+    } else { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
   };
 
   const playPattern = async (l) => {
     setStatus('start'); await new Promise(r => setTimeout(r, 500));
     setStatus('playing'); const p = alpha[l];
     for (let r = 0; r < 3; r++) {
-      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); } else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const left = p[r], right = p[r+3];
+      await trigger(left, right); 
       await new Promise(r => setTimeout(r, 500));
-      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); } else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await trigger(right, false);
       await new Promise(r => setTimeout(r, 600));
     }
     setStatus('idle');
