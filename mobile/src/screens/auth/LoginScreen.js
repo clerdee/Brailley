@@ -10,49 +10,41 @@ export default function LoginScreen({ navigation }) {
   const { showNotification } = useNotification();
 
   const handleLogin = async () => {
-    if (!username) return showNotification('Please enter your username', 'error');
+    if (!username) return showNotification('Enter username', 'error');
     setLoading(true);
     try {
       const deviceId = await getOrCreateDeviceId();
-      if (!deviceId) { setLoading(false); return showNotification('Could not retrieve device credentials.', 'error'); }
-
-      const level = await Battery.getBatteryLevelAsync(); 
-      const battery = Math.round(level * 100) + '%';      
-
-      const res = await api.post('/auth/login', { username, deviceId, battery }); 
-
-      if (res.data.role === 'admin') return showNotification('Admins must use the Web Portal.', 'error');
-
-      showNotification('Welcome back to Brailley!', 'success');
-      setTimeout(() => navigation.replace('Home'), 1500);
-    } catch (error) {
-      showNotification(error.response?.data?.message || 'Login failed', 'error');
-    } finally { setLoading(false); }
+      const level = await Battery.getBatteryLevelAsync();
+      const res = await api.post('/auth/login', { username, deviceId, battery: Math.round(level * 100) + '%' });
+      if (res.data.role === 'admin') return showNotification('Use Web Portal', 'error');
+      showNotification('Welcome back!', 'success');
+      setTimeout(() => navigation.replace('Home'), 1000);
+    } catch (e) { showNotification(e.response?.data?.message || 'Login failed', 'error'); }
+    finally { setLoading(false); }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Braill<Text style={styles.highlight}>ey.</Text></Text>
-      <Text style={styles.subtitle}>Welcome back. Enter your username.</Text>
-      <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#64748b" autoCapitalize="none" value={username} onChangeText={setUsername} />
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Sign In</Text>}
+      <TouchableOpacity onPress={() => navigation.goBack()}><Text style={styles.back}>← Back</Text></TouchableOpacity>
+      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.subtitle}>Sign in to continue your journey</Text>
+      <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#64748b" value={username} onChangeText={setUsername} autoCapitalize="none" />
+      <TouchableOpacity style={styles.btn} onPress={handleLogin} disabled={loading}>
+        {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.btnTxt}>Sign In</Text>}
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.replace('Register')} style={{ marginTop: 20 }}>
-        <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkHighlight}>Get Started</Text></Text>
-      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.replace('Register')} style={styles.link}><Text style={styles.linkTxt}>New here? <Text style={styles.hl}>Create Account</Text></Text></TouchableOpacity>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', padding: 30 },
-  title: { fontSize: 45, fontWeight: '900', color: '#f8fafc', marginBottom: 5 },
-  highlight: { color: '#38bdf8' },
-  subtitle: { fontSize: 16, color: '#94a3b8', marginBottom: 40 },
-  input: { backgroundColor: 'rgba(30, 41, 59, 0.8)', padding: 15, borderRadius: 10, color: '#fff', marginBottom: 15, borderWidth: 1, borderColor: '#334155' },
-  button: { backgroundColor: '#38bdf8', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
-  buttonText: { color: '#0f172a', fontWeight: 'bold', fontSize: 16 },
-  linkText: { color: '#94a3b8', textAlign: 'center' },
-  linkHighlight: { color: '#38bdf8', fontWeight: 'bold' }
+  container: { flex: 1, backgroundColor: '#0f172a', padding: 30, justifyContent: 'center' },
+  title: { fontSize: 32, fontWeight: '800', color: '#f8fafc', marginBottom: 8 },
+  subtitle: { fontSize: 16, color: '#94a3b8', marginBottom: 32 },
+  input: { backgroundColor: '#1e293b', padding: 18, borderRadius: 12, color: '#fff', fontSize: 16, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  btn: { backgroundColor: '#38bdf8', padding: 18, borderRadius: 12, alignItems: 'center', marginTop: 8 },
+  btnTxt: { color: '#0f172a', fontWeight: 'bold', fontSize: 16 },
+  link: { marginTop: 24, alignItems: 'center' },
+  linkTxt: { color: '#94a3b8', fontSize: 14 },
+  hl: { color: '#38bdf8', fontWeight: 'bold' },
+  back: { color: '#64748b', marginBottom: 20 }
 });

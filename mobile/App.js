@@ -9,6 +9,7 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import BasicsScreen from './src/screens/BasicsScreen';
+import NumbersSymbolsScreen from './src/screens/NumberSymbolsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,12 +18,20 @@ export default function App() {
     <NotificationProvider>
       <NavigationContainer>
         <StatusBar style="light" />
-        <Stack.Navigator initialRouteName="Landing" screenOptions={{ headerShown: false }}>
+        <Stack.Navigator 
+          initialRouteName="Landing" 
+          screenOptions={{ 
+            headerShown: false,
+            gestureEnabled: false, 
+            animation: 'none'     
+          }}
+        >
           <Stack.Screen name="Landing" component={LandingScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Basics" component={BasicsScreen} />
+          <Stack.Screen name="NumbersSymbols" component={NumbersSymbolsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </NotificationProvider>

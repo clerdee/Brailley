@@ -37,13 +37,15 @@ export default function HomeScreen({ navigation }) {
         </View>
         <Text style={styles.sectionTitle}>Your Modules</Text>
         <TouchableOpacity style={styles.card} onPress={() => navigation.replace('Basics')}>
-          <View style={styles.cardHeader}><Text style={styles.cardTitle}>Basics: The Alphabet</Text><View style={styles.badge}><Text style={styles.badgeText}>In Progress</Text></View></View>
+          <View style={styles.cardHeader}><Text style={styles.cardTitle}>Basics: The Alphabet</Text><View style={styles.badge}><Text style={styles.badgeText}>ASL</Text></View></View>
           <Text style={styles.cardDescription}>Learn to identify the dots for letters A through Z using haptic feedback.</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.card}>
+
+        <TouchableOpacity style={styles.card} onPress={() => navigation.replace('NumbersSymbols')}>
           <View style={styles.cardHeader}><Text style={styles.cardTitle}>Numbers & Basic Symbols</Text></View>
           <Text style={styles.cardDescription}>Understand number signs and essential punctuation marks in Braille.</Text>
         </TouchableOpacity>
+        
         <Text style={styles.sectionTitleTask}>Training Center</Text>
         <TouchableOpacity style={styles.taskCard}>
           <View style={styles.cardHeader}><Text style={styles.taskTitle}>Daily Challenges</Text><View style={styles.taskBadge}><Text style={styles.taskBadgeText}>New Tasks</Text></View></View>

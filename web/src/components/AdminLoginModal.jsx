@@ -23,7 +23,7 @@ export default function AdminLoginModal({ isOpen, onClose }) {
     try {
       if (activeTab === 'login') {
         const user = await login(email, password);
-        if (user?.role === 'admin') {
+        if (user?.role === 'admin' || user?.role === 'superadmin') {
           navigate('/admin/dashboard');
         } else {
           setError('Access Denied. Admins only.');
