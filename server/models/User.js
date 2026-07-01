@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: function() { return this.role === 'admin'; } },
   username: { type: String, unique: true, sparse: true, required: function() { return this.role === 'student'; } },
   deviceId: { type: String, required: function() { return this.role === 'student'; } },
-  role: { type: String, enum: ['student', 'admin'], default: 'student' },
+  role: { type: String, enum: ['student', 'admin', 'superadmin'], default: 'student' },
   isApproved: { type: Boolean, default: false },
   deviceData: {
     battery: { type: String, default: '0%' },

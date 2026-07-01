@@ -1,17 +1,14 @@
 const User = require('../models/User');
 
-const adminMiddleware = async (req, res, next) => {
+const checkRole = (roles) => async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-
-    if (user && user.role === 'admin' && user.isApproved) {
-      next(); 
-    } else {
-      res.status(403).json({ message: 'Access denied. You must be an approved Admin.' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Server error verifying admin status' });
-  }
+    if (user && user.isApproved && roles.includes(user.role)) return next();
+    res.status(403).json({ message: 'Access denied: Insufficient permissions or pending approval.' });
+  } catch (e) { res.status(500).json({ message: 'Server error verifying role.' }); }
 };
 
-module.exports = adminMiddleware;
+const adminMiddleware = checkRole(['admin', 'superadmin']);
+const superAdminMiddleware = checkRole(['superadmin']);
+
+module.exports = { adminMiddleware, superAdminMiddleware };

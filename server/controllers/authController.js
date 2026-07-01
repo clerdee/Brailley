@@ -4,21 +4,24 @@ const generateToken = require('../utils/generateToken');
 const registerUser = async (req, res) => {
   const { name, email, password, username, deviceId, role } = req.body;
   try {
-    const isFirst = (await User.countDocuments({})) === 0;
-    const assignedRole = isFirst ? 'admin' : (role || 'student');
-    const isApproved = isFirst || assignedRole === 'student';
+    const adminCount = await User.countDocuments({ role: { $in: ['admin', 'superadmin'] } });
+    const isFirstAdmin = adminCount === 0;
+
+    const assignedRole = isFirstAdmin ? 'superadmin' : (role || 'student');
+    const isApproved = isFirstAdmin || assignedRole === 'student';
 
     if (assignedRole === 'student') {
       if (!username || !deviceId) return res.status(400).json({ message: 'Missing student fields' });
       if (await User.findOne({ username })) return res.status(400).json({ message: 'Username taken' });
       const user = await User.create({ username, deviceId, role: assignedRole, isApproved });
       return res.status(201).json({ _id: user._id, username: user.username, role: user.role, isApproved: user.isApproved, token: generateToken(user._id) });
+    } else {
+      if (!email || !password || !name) return res.status(400).json({ message: 'Missing fields' });
+      if (await User.findOne({ email })) return res.status(400).json({ message: 'Email exists' });
+      
+      const user = await User.create({ name, email, password, role: assignedRole, isApproved });
+      res.status(201).json({ _id: user._id, role: user.role, token: generateToken(user._id) });
     }
-
-    if (!email || !password || !name) return res.status(400).json({ message: 'Missing admin fields' });
-    if (await User.findOne({ email })) return res.status(400).json({ message: 'Email exists' });
-    const user = await User.create({ name, email, password, role: assignedRole, isApproved });
-    res.status(201).json({ _id: user._id, name: user.name, email: user.email, role: user.role, isApproved: user.isApproved, token: generateToken(user._id) });
   } catch (e) { res.status(500).json({ message: e.message }); }
 };
 
