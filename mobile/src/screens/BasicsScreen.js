@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function BasicsScreen({ navigation }) {
   const [letter, setLetter] = useState('A');
-  const [status, setStatus] = useState('idle'); // 'idle' | 'playing'
+  const [status, setStatus] = useState('idle');
 
   const alpha = {
     A: [true, false, false, false, false, false], B: [true, true, false, false, false, false],
@@ -23,6 +23,8 @@ export default function BasicsScreen({ navigation }) {
   };
 
   const playPattern = async (l) => {
+    setStatus('start');
+    await new Promise(r => setTimeout(r, 500));
     setStatus('playing');
     const p = alpha[l];
     for (let r = 0; r < 3; r++) {
@@ -36,14 +38,13 @@ export default function BasicsScreen({ navigation }) {
     setStatus('idle');
   };
 
-  const getBorderColor = () => status === 'playing' ? '#38bdf8' : '#334155';
+  const getBorderColor = () => status === 'playing' ? '#38bdf8' : status === 'start' ? '#22c55e' : '#334155';
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.replace('Home')}><Text style={styles.backBtn}>Back</Text></TouchableOpacity>
-        <Text style={styles.hTitle}>The Alphabet</Text>
-        <View style={{ width: 40 }} />
+        <Text style={styles.hTitle}>The Alphabet</Text><View style={{ width: 40 }} />
       </View>
       <View style={styles.container}>
         <View style={styles.dispCard}><Text style={styles.lText}>{letter}</Text></View>
@@ -55,8 +56,7 @@ export default function BasicsScreen({ navigation }) {
         </View>
         <ScrollView style={styles.kbScroll} contentContainerStyle={styles.kbGrid}>
           {Object.keys(alpha).map((l) => (
-            <TouchableOpacity key={l} style={[styles.key, l === letter && styles.activeKey]} 
-              onPress={() => { setStatus('start'); setLetter(l); setTimeout(() => playPattern(l), 300); }}>
+            <TouchableOpacity key={l} style={[styles.key, l === letter && styles.activeKey]} onPress={() => { setLetter(l); playPattern(l); }}>
               <Text style={styles.keyText}>{l}</Text>
             </TouchableOpacity>
           ))}

@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function NumbersSymbolsScreen({ navigation }) {
   const [char, setChar] = useState('1');
-  const [isVibrating, setIsVibrating] = useState(false);
+  const [status, setStatus] = useState('idle');
 
   const dict = {
     '1': [true, false, false, false, false, false], '2': [true, true, false, false, false, false],
@@ -21,7 +21,9 @@ export default function NumbersSymbolsScreen({ navigation }) {
   };
 
   const playPattern = async (c) => {
-    setIsVibrating(true);
+    setStatus('start');
+    await new Promise(r => setTimeout(r, 500));
+    setStatus('playing');
     const p = dict[c];
     for (let r = 0; r < 3; r++) {
       if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); }
@@ -31,34 +33,31 @@ export default function NumbersSymbolsScreen({ navigation }) {
       else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await new Promise(r => setTimeout(r, 600));
     }
-    setIsVibrating(false);
+    setStatus('idle');
   };
 
-  const renderDot = (a, i) => <View key={i} style={[styles.dot, a && styles.activeDot]} />;
+  const getBorderColor = () => status === 'playing' ? '#38bdf8' : status === 'start' ? '#22c55e' : '#334155';
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.replace('Home')}><Text style={styles.backBtn}>Back</Text></TouchableOpacity>
-        <Text style={styles.hTitle}>Numbers & Symbols</Text>
-        <View style={{ width: 40 }} />
+        <Text style={styles.hTitle}>Numbers & Symbols</Text><View style={{ width: 40 }} />
       </View>
       <View style={styles.container}>
         <View style={styles.dispCard}><Text style={styles.lText}>{char}</Text></View>
-        <View style={[styles.gridCont, isVibrating && styles.vibeActive]}>
+        <View style={[styles.gridCont, { borderColor: getBorderColor() }]}>
           <View style={styles.bGrid}>
-            <View style={styles.col}>{renderDot(dict[char][0], 0)}{renderDot(dict[char][1], 1)}{renderDot(dict[char][2], 2)}</View>
-            <View style={styles.col}>{renderDot(dict[char][3], 3)}{renderDot(dict[char][4], 4)}{renderDot(dict[char][5], 5)}</View>
+            <View style={styles.col}>{dict[char].slice(0,3).map((a,i) => <View key={i} style={[styles.dot, a && styles.activeDot]} />)}</View>
+            <View style={styles.col}>{dict[char].slice(3,6).map((a,i) => <View key={i+3} style={[styles.dot, a && styles.activeDot]} />)}</View>
           </View>
         </View>
-        <ScrollView style={styles.kbScroll}>
-          <View style={styles.kbGrid}>
-            {Object.keys(dict).map((c) => (
-              <TouchableOpacity key={c} style={[styles.key, c === char && styles.activeKey]} onPress={() => { setChar(c); playPattern(c); }}>
-                <Text style={styles.keyText}>{c}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <ScrollView style={styles.kbScroll} contentContainerStyle={styles.kbGrid}>
+          {Object.keys(dict).map((c) => (
+            <TouchableOpacity key={c} style={[styles.key, c === char && styles.activeKey]} onPress={() => { setChar(c); playPattern(c); }}>
+              <Text style={styles.keyText}>{c}</Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -73,8 +72,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   dispCard: { alignItems: 'center', marginBottom: 20 },
   lText: { fontSize: 60, fontWeight: '900', color: '#f8fafc' },
-  gridCont: { backgroundColor: '#1e293b', paddingVertical: 30, paddingHorizontal: 40, borderRadius: 30, borderWidth: 2, borderColor: '#334155', marginBottom: 20, alignItems: 'center' },
-  vibeActive: { borderColor: '#38bdf8' },
+  gridCont: { backgroundColor: '#1e293b', paddingVertical: 30, paddingHorizontal: 40, borderRadius: 30, borderWidth: 3, marginBottom: 20, alignItems: 'center' },
   bGrid: { flexDirection: 'row', justifyContent: 'space-between', width: 140 },
   col: { justifyContent: 'space-between', height: 220 },
   dot: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#334155' },
