@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Vibration } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Vibration, Modal } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 
@@ -8,6 +8,7 @@ export default function NumbersSymbolsScreen({ navigation }) {
   const [status, setStatus] = useState('idle');
   const [activeDot, setActiveDot] = useState(-1);
   const [sound, setSound] = useState();
+  const [showModal, setShowModal] = useState(false);
 
   const dict = {
     '1': [true, false, false, false, false, false], '2': [true, true, false, false, false, false],
@@ -32,7 +33,7 @@ export default function NumbersSymbolsScreen({ navigation }) {
     setActiveDot(idx);
     if (isHard) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250);
-      if (sound) { await sound.setPositionAsync(0); await sound.setVolumeAsync(1); await sound.playAsync(); if(!keep) { await new Promise(r => setTimeout(r, 400)); await sound.setVolumeAsync(0); await sound.pauseAsync(); } }
+      if (sound) { await sound.setPositionAsync(0); await sound.setVolumeAsync(1); await sound.playAsync(); if(!keep) { await new Promise(r => setTimeout(r, 400)); await sound.pauseAsync(); } }
     } else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
@@ -48,10 +49,22 @@ export default function NumbersSymbolsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Modal visible={showModal} transparent animationType="fade">
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Numbers & Symbols</Text>
+            <Text style={styles.modalText}>1. Select a character from the keyboard below.{'\n'}2. Green border means loading.{'\n'}3. Blue border means vibration is playing.{'\n'}4. Dots will highlight as they vibrate.</Text>
+            <TouchableOpacity onPress={() => setShowModal(false)} style={styles.closeBtn}><Text style={styles.btnText}>Close</Text></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.replace('Home')}><Text style={styles.backBtn}>Back</Text></TouchableOpacity>
-        <Text style={styles.hTitle}>Numbers & Symbols</Text><View style={{ width: 40 }} />
+        <Text style={styles.hTitle}>Numbers & Symbols</Text>
+        <TouchableOpacity onPress={() => setShowModal(true)} style={styles.helpBtn}><Text style={styles.helpTxt}>?</Text></TouchableOpacity>
       </View>
+
       <View style={styles.container}>
         <View style={styles.dispCard}><Text style={styles.lText}>{char}</Text></View>
         <View style={[styles.gridCont, { borderColor: status === 'playing' ? '#38bdf8' : status === 'start' ? '#22c55e' : '#334155' }]}>
@@ -60,7 +73,7 @@ export default function NumbersSymbolsScreen({ navigation }) {
             <View style={styles.col}>{dict[char].slice(3,6).map((a,i) => <View key={i+3} style={[styles.dot, a && styles.activeDot, activeDot === i+3 && styles.playingDot]} />)}</View>
           </View>
         </View>
-        <ScrollView style={styles.kbScroll} contentContainerStyle={styles.kbGrid}>
+        <ScrollView contentContainerStyle={styles.kbGrid}>
           {Object.keys(dict).map((c) => (
             <TouchableOpacity key={c} style={[styles.key, c === char && styles.activeKey]} onPress={() => { setChar(c); playPattern(c); }}>
               <Text style={styles.keyText}>{c}</Text>
@@ -77,6 +90,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 25, paddingTop: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
   backBtn: { color: '#38bdf8', fontSize: 16, fontWeight: '600' },
   hTitle: { color: '#f8fafc', fontSize: 18, fontWeight: '700' },
+  helpBtn: { width: 35, height: 35, borderRadius: 18, backgroundColor: '#1e293b', alignItems: 'center', justifyContent: 'center' },
+  helpTxt: { color: '#38bdf8', fontWeight: 'bold' },
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   dispCard: { alignItems: 'center', marginBottom: 20 },
   lText: { fontSize: 60, fontWeight: '900', color: '#f8fafc' },
@@ -86,9 +101,14 @@ const styles = StyleSheet.create({
   dot: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#334155' },
   activeDot: { backgroundColor: '#38bdf8' },
   playingDot: { backgroundColor: '#22c55e', transform: [{ scale: 1.2 }] },
-  kbScroll: { flex: 1 },
   kbGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingBottom: 20 },
   key: { width: 50, height: 50, backgroundColor: '#1e293b', margin: 6, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
   activeKey: { borderColor: '#38bdf8', borderWidth: 2 },
-  keyText: { color: '#f8fafc', fontSize: 18, fontWeight: 'bold' }
+  keyText: { color: '#f8fafc', fontSize: 18, fontWeight: 'bold' },
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
+  modalCard: { backgroundColor: '#1e293b', padding: 25, borderRadius: 20, width: '80%' },
+  modalTitle: { fontSize: 20, color: '#fff', fontWeight: 'bold', marginBottom: 15 },
+  modalText: { color: '#94a3b8', lineHeight: 22, marginBottom: 20 },
+  closeBtn: { backgroundColor: '#38bdf8', padding: 12, borderRadius: 10, alignItems: 'center' },
+  btnText: { color: '#0f172a', fontWeight: 'bold' }
 });
