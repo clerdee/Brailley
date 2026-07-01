@@ -1,48 +1,50 @@
-import { useState, useEffect } from 'react'; import { motion, AnimatePresence } from 'framer-motion';
-import api from '../../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function StudentEditModal({ isOpen, onClose, student, onRefresh }) {
-  const [formData, setFormData] = useState({ username: '', deviceId: '' });
-  const [loading, setLoading] = useState(false);
+export default function StudentEditModal({ isOpen, onClose, student }) {
+  if (!student) return null;
 
-  useEffect(() => { if (student) setFormData({ username: student.username || '', deviceId: student.deviceId || '' }); }, [student]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault(); setLoading(true);
-    try {
-      await api.put(`/admin/users/${student._id}`, formData);
-      onRefresh(true); 
-      onClose();
-    } catch (err) { 
-      console.error(err); alert('Failed to update student details.'); 
-    } finally { setLoading(false); }
-  };
+  const Field = ({ label, value, icon, flex = 1, color = '#94a3b8' }) => (
+    <div style={{ flex, minWidth: '150px' }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.65rem', fontWeight: '800', color: '#64748b', letterSpacing: '0.1em', marginBottom: '8px' }}>
+        {icon} {label}
+      </label>
+      <div style={{ padding: '12px 16px', borderRadius: '12px', background: 'rgba(30, 41, 59, 0.4)', color: color, fontSize: '0.95rem', border: '1px solid rgba(255,255,255,0.05)', fontWeight: '600' }}>
+        {value}
+      </div>
+    </div>
+  );
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(9, 13, 22, 0.8)', backdropFilter: 'blur(5px)' }} />
-          <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} style={{ position: 'relative', background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '2.5rem', width: '100%', maxWidth: '420px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.4rem', fontWeight: '800' }}>Edit Student</h3>
-              <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(9, 13, 22, 0.8)', backdropFilter: 'blur(5px)' }} />
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} style={{ position: 'relative', background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '2.5rem', width: '90%', maxWidth: '700px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: '#10b981', display: 'grid', placeItems: 'center', fontSize: '1.2rem' }}>🧑‍🎓</div>
+                <div>
+                  <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.4rem', fontWeight: '800' }}>Student Details</h3>
+                  <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.85rem' }}>Brailley Student Information Portal</p>
+                </div>
+              </div>
+              <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', width: '36px', height: '36px', borderRadius: '12px', cursor: 'pointer' }}>✕</button>
             </div>
             
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '1.2rem' }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>Username</label>
-                <input type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(148, 163, 184, 0.2)', background: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', outline: 'none' }} required />
-              </div>
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>Hardware Token (Device ID)</label>
-                <input type="text" value={formData.deviceId} onChange={e => setFormData({...formData, deviceId: e.target.value})} style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(148, 163, 184, 0.2)', background: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', outline: 'none', fontFamily: 'monospace' }} placeholder="Unassigned" />
-              </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', background: 'transparent', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.2)', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" disabled={loading} style={{ flex: 1, padding: '12px', background: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>{loading ? 'Saving...' : 'Save Changes'}</button>
-              </div>
-            </form>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <Field label="SYSTEM ID" icon="🔑" value={student._id} flex={2} />
+              <Field label="JOINED DATE" icon="📅" value={new Date(student.createdAt).toLocaleDateString()} flex={1} />
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+              <Field label="USERNAME" icon="👤" value={student.username} />
+              <Field label="DEVICE ID" icon="📱" value={student.deviceId || 'UNASSIGNED'} color={student.deviceId ? '#38bdf8' : '#ef4444'} />
+              <Field label="LAST SYNC" icon="🔄" value={student.deviceData?.lastSync ? new Date(student.deviceData.lastSync).toLocaleString() : 'N/A'} />
+              <Field label="STATUS" icon="⚡" value="ACTIVE" color="#34d399" />
+            </div>
+
+            <button onClick={onClose} style={{ width: '100%', padding: '14px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}>Close View</button>
           </motion.div>
         </div>
       )}

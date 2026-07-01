@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Vibration, Modal } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Vibration, Modal, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 
@@ -9,6 +9,7 @@ export default function NumbersSymbolsScreen({ navigation }) {
   const [activeDot, setActiveDot] = useState(-1);
   const [sound, setSound] = useState();
   const [showModal, setShowModal] = useState(false);
+  const eyeAnim = useState(new Animated.Value(0))[0];
 
   const dict = {
     '1': [true, false, false, false, false, false], '2': [true, true, false, false, false, false],
@@ -29,11 +30,20 @@ export default function NumbersSymbolsScreen({ navigation }) {
     load(); return () => sound?.unloadAsync();
   }, []);
 
+  useEffect(() => {
+    if (showModal) {
+      Animated.loop(Animated.sequence([
+        Animated.timing(eyeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(eyeAnim, { toValue: 0, duration: 1000, useNativeDriver: true })
+      ])).start();
+    }
+  }, [showModal]);
+
   const trigger = async (isHard, idx, keep = false) => {
     setActiveDot(idx);
     if (isHard) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250);
-      if (sound) { await sound.setPositionAsync(0); await sound.setVolumeAsync(1); await sound.playAsync(); if(!keep) { await new Promise(r => setTimeout(r, 400)); await sound.pauseAsync(); } }
+      if (sound) { await sound.setPositionAsync(0); await sound.setVolumeAsync(1); await sound.playAsync(); if(!keep) { await new Promise(r => setTimeout(r, 400)); await sound.setVolumeAsync(0); await sound.pauseAsync(); } }
     } else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
@@ -52,9 +62,16 @@ export default function NumbersSymbolsScreen({ navigation }) {
       <Modal visible={showModal} transparent animationType="fade">
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Numbers & Symbols</Text>
-            <Text style={styles.modalText}>1. Select a character from the keyboard below.{'\n'}2. Green border means loading.{'\n'}3. Blue border means vibration is playing.{'\n'}4. Dots will highlight as they vibrate.</Text>
-            <TouchableOpacity onPress={() => setShowModal(false)} style={styles.closeBtn}><Text style={styles.btnText}>Close</Text></TouchableOpacity>
+            <View style={styles.robotHead}>
+              <View style={styles.robotEyeContainer}>
+                <Animated.View style={[styles.eye, { transform: [{ translateX: eyeAnim.interpolate({ inputRange: [0, 1], outputRange: [-5, 5] }) }] }]} />
+                <Animated.View style={[styles.eye, { transform: [{ translateX: eyeAnim.interpolate({ inputRange: [0, 1], outputRange: [-5, 5] }) }] }]} />
+              </View>
+              <View style={styles.mouth} />
+            </View>
+            <Text style={styles.modalTitle}>Curious Robot says...</Text>
+            <Text style={styles.modalText}>Follow the dot—it dances to the vibration.</Text>
+            <TouchableOpacity onPress={() => setShowModal(false)} style={styles.closeBtn}><Text style={styles.btnText}>Understood.</Text></TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -105,10 +122,14 @@ const styles = StyleSheet.create({
   key: { width: 50, height: 50, backgroundColor: '#1e293b', margin: 6, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
   activeKey: { borderColor: '#38bdf8', borderWidth: 2 },
   keyText: { color: '#f8fafc', fontSize: 18, fontWeight: 'bold' },
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
-  modalCard: { backgroundColor: '#1e293b', padding: 25, borderRadius: 20, width: '80%' },
-  modalTitle: { fontSize: 20, color: '#fff', fontWeight: 'bold', marginBottom: 15 },
-  modalText: { color: '#94a3b8', lineHeight: 22, marginBottom: 20 },
-  closeBtn: { backgroundColor: '#38bdf8', padding: 12, borderRadius: 10, alignItems: 'center' },
-  btnText: { color: '#0f172a', fontWeight: 'bold' }
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.9)', justifyContent: 'center', alignItems: 'center' },
+  modalCard: { backgroundColor: '#1e293b', padding: 25, borderRadius: 20, width: '80%', alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  robotHead: { width: 70, height: 60, backgroundColor: '#38bdf8', borderRadius: 12, marginBottom: 15, alignItems: 'center', justifyContent: 'center' },
+  robotEyeContainer: { flexDirection: 'row', gap: 8 },
+  eye: { width: 10, height: 10, backgroundColor: '#0f172a', borderRadius: 5 },
+  mouth: { width: 25, height: 4, backgroundColor: '#0f172a', marginTop: 8, borderRadius: 2 },
+  modalTitle: { fontSize: 20, color: '#f8fafc', fontWeight: 'bold', marginBottom: 10 },
+  modalText: { color: '#94a3b8', textAlign: 'center', marginBottom: 20, lineHeight: 20 },
+  closeBtn: { backgroundColor: '#38bdf8', padding: 15, borderRadius: 10, width: '100%', alignItems: 'center' },
+  btnText: { color: '#0f172a', fontWeight: 'bold', fontSize: 16 }
 });
