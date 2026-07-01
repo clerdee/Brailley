@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function BasicsScreen({ navigation }) {
   const [letter, setLetter] = useState('A');
-  const [isVibrating, setIsVibrating] = useState(false);
+  const [status, setStatus] = useState('idle'); // 'idle' | 'playing'
 
   const alpha = {
     A: [true, false, false, false, false, false], B: [true, true, false, false, false, false],
@@ -23,20 +23,20 @@ export default function BasicsScreen({ navigation }) {
   };
 
   const playPattern = async (l) => {
-    setIsVibrating(true);
+    setStatus('playing');
     const p = alpha[l];
     for (let r = 0; r < 3; r++) {
-      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(100); }
+      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); }
       else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await new Promise(r => setTimeout(r, 500));
-      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(100); }
+      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); }
       else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await new Promise(r => setTimeout(r, 600));
     }
-    setIsVibrating(false);
+    setStatus('idle');
   };
 
-  const renderDot = (a, i) => <View key={i} style={[styles.dot, a && styles.activeDot]} />;
+  const getBorderColor = () => status === 'playing' ? '#38bdf8' : '#334155';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -47,20 +47,19 @@ export default function BasicsScreen({ navigation }) {
       </View>
       <View style={styles.container}>
         <View style={styles.dispCard}><Text style={styles.lText}>{letter}</Text></View>
-        <View style={[styles.gridCont, isVibrating && styles.vibeActive]}>
+        <View style={[styles.gridCont, { borderColor: getBorderColor() }]}>
           <View style={styles.bGrid}>
-            <View style={styles.col}>{renderDot(alpha[letter][0], 0)}{renderDot(alpha[letter][1], 1)}{renderDot(alpha[letter][2], 2)}</View>
-            <View style={styles.col}>{renderDot(alpha[letter][3], 3)}{renderDot(alpha[letter][4], 4)}{renderDot(alpha[letter][5], 5)}</View>
+            <View style={styles.col}>{alpha[letter].slice(0,3).map((a,i) => <View key={i} style={[styles.dot, a && styles.activeDot]} />)}</View>
+            <View style={styles.col}>{alpha[letter].slice(3,6).map((a,i) => <View key={i+3} style={[styles.dot, a && styles.activeDot]} />)}</View>
           </View>
         </View>
-        <ScrollView style={styles.kbScroll}>
-          <View style={styles.kbGrid}>
-            {Object.keys(alpha).map((l) => (
-              <TouchableOpacity key={l} style={[styles.key, l === letter && styles.activeKey]} onPress={() => { setLetter(l); playPattern(l); }}>
-                <Text style={styles.keyText}>{l}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <ScrollView style={styles.kbScroll} contentContainerStyle={styles.kbGrid}>
+          {Object.keys(alpha).map((l) => (
+            <TouchableOpacity key={l} style={[styles.key, l === letter && styles.activeKey]} 
+              onPress={() => { setStatus('start'); setLetter(l); setTimeout(() => playPattern(l), 300); }}>
+              <Text style={styles.keyText}>{l}</Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -75,8 +74,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   dispCard: { alignItems: 'center', marginBottom: 20 },
   lText: { fontSize: 60, fontWeight: '900', color: '#f8fafc' },
-  gridCont: { backgroundColor: '#1e293b', paddingVertical: 30, paddingHorizontal: 40, borderRadius: 30, borderWidth: 2, borderColor: '#334155', marginBottom: 20, alignItems: 'center' },
-  vibeActive: { borderColor: '#38bdf8' },
+  gridCont: { backgroundColor: '#1e293b', paddingVertical: 30, paddingHorizontal: 40, borderRadius: 30, borderWidth: 3, marginBottom: 20, alignItems: 'center' },
   bGrid: { flexDirection: 'row', justifyContent: 'space-between', width: 140 },
   col: { justifyContent: 'space-between', height: 220 },
   dot: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#334155' },
