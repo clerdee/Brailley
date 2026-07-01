@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
@@ -6,6 +6,7 @@ import { Audio } from 'expo-av';
 export default function BasicsScreen({ navigation }) {
   const [letter, setLetter] = useState('A');
   const [status, setStatus] = useState('idle');
+  const [sound, setSound] = useState();
 
   const alpha = {
     A: [true, false, false, false, false, false], B: [true, true, false, false, false, false],
@@ -23,28 +24,26 @@ export default function BasicsScreen({ navigation }) {
     Y: [true, false, true, true, true, true], Z: [true, false, true, false, true, true]
   };
 
+  useEffect(() => {
+    const load = async () => { const { sound } = await Audio.Sound.createAsync(require('../../assets/buzz.mp3')); setSound(sound); };
+    load(); return () => sound?.unloadAsync();
+  }, []);
+
   const playBuzz = async () => {
-    const { sound } = await Audio.Sound.createAsync(require('../../assets/buzz.mp3'));
-    await sound.playAsync();
+    if (sound) { await sound.setPositionAsync(0); await sound.setVolumeAsync(1); await sound.playAsync(); await new Promise(r => setTimeout(r, 200)); await sound.setVolumeAsync(0); await sound.pauseAsync(); }
   };
 
-const playPattern = async (l) => {
-    setStatus('start');
-    await new Promise(r => setTimeout(r, 500));
-    setStatus('playing');
-    const p = alpha[l];
+  const playPattern = async (l) => {
+    setStatus('start'); await new Promise(r => setTimeout(r, 500));
+    setStatus('playing'); const p = alpha[l];
     for (let r = 0; r < 3; r++) {
-      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); }
-      else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (p[r]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); } else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await new Promise(r => setTimeout(r, 500));
-      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); }
-      else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (p[r + 3]) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); Vibration.vibrate(250); playBuzz(); } else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await new Promise(r => setTimeout(r, 600));
     }
     setStatus('idle');
   };
-
-  const getBorderColor = () => status === 'playing' ? '#38bdf8' : status === 'start' ? '#22c55e' : '#334155';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -54,7 +53,7 @@ const playPattern = async (l) => {
       </View>
       <View style={styles.container}>
         <View style={styles.dispCard}><Text style={styles.lText}>{letter}</Text></View>
-        <View style={[styles.gridCont, { borderColor: getBorderColor() }]}>
+        <View style={[styles.gridCont, { borderColor: status === 'playing' ? '#38bdf8' : status === 'start' ? '#22c55e' : '#334155' }]}>
           <View style={styles.bGrid}>
             <View style={styles.col}>{alpha[letter].slice(0,3).map((a,i) => <View key={i} style={[styles.dot, a && styles.activeDot]} />)}</View>
             <View style={styles.col}>{alpha[letter].slice(3,6).map((a,i) => <View key={i+3} style={[styles.dot, a && styles.activeDot]} />)}</View>
